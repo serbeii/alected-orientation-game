@@ -1,0 +1,7 @@
+- [ ] Raycast bağla
+- [ ] Blokları bağla
+- [ ] Blokları genişlet
+- [ ] Haritalara collision
+- [ ] Haritalara başlama, bitme, timer
+- [ ] Yeni assetler
+- [ ] Yeni haritalar

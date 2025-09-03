@@ -30,6 +30,11 @@
         "blockly": "^12.3.0",
         "js-interpreter": "^6.0.1",
         "phaser": "^3.90.0",
+        "phaser-raycaster": "^0.10.11",
+        "unplugin-auto-import": "^20.1.0",
+        "unplugin-fonts": "^1.4.0",
+        "unplugin-vue-components": "^29.0.0",
+        "vite-plugin-vue-layouts-next": "^1.0.0",
         "vue": "3.5.13"
     },
     "devDependencies": {
