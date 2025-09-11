@@ -10,6 +10,9 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 	private static readonly STEERING_EASING = 0.08;
 
 	private accelerationVector: Phaser.Math.Vector2;
+	private raycaster: any;
+	private rays: any[];
+	private sensorStatus: { [key: number]: boolean } = {};
 
 	constructor(scene: Phaser.Scene, x: number, y: number) {
 		super(scene, x, y, 'car');
@@ -21,14 +24,38 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		this.setAngularDrag(Car.ANGULAR_DRAG);
 		this.setMaxVelocity(Car.MAX_VELOCITY);
 		this.setCollideWorldBounds(true);
+		this.setDepth(10);
 		this.accelerationVector = new Phaser.Math.Vector2();
+
+		this.raycaster = (this.scene as any).raycasterPlugin.createRaycaster();
+		this.rays = [];
+		const rayLength = 60; // The detection distance
+		const angles: { [key: number]: number } = {
+			7: -135,
+			8: -90,
+			9: -45, // Top-left, Top, Top-right
+			4: -180,
+			6: 0, // Left, Right
+			1: 135,
+			2: 90,
+			3: 45, // Bottom-left, Bottom, Bottom-right
+		};
+		for (const key in angles) {
+			const angleDeg = angles[key];
+			const ray = this.raycaster.createRay({
+				origin: { x: this.x, y: this.y },
+				angleDeg: angleDeg, // Use degrees for simplicity
+				range: rayLength,
+			});
+			this.rays.push(ray);
+			this.sensorStatus[key] = false; // Initialize sensor status
+		}
 	}
 
 	public update(
-		cursors: Phaser.Types.Input.Keyboard.CursorKeys,
 		delta: number,
 	): void {
-		this.handleInput(cursors, delta);
+		this.updateRays();
 	}
 
 	private handleInput(
@@ -93,5 +120,41 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		} else if (cursors.right.isDown) {
 			this.setAngularVelocity(Car.TURN_SPEED);
 		}
+	}
+	private updateRays(): void {
+		let i = 0;
+		for (const key in this.sensorStatus) {
+			const ray = this.rays[i];
+			ray.setOrigin(this.x, this.y);
+			ray.setAngle(this.rotation + ray.angle);
+
+			const intersection = ray.cast();
+			this.sensorStatus[key] = !!intersection;
+			i++;
+		}
+	}
+
+	public moveForward(): void {
+		this.scene.physics.velocityFromRotation(
+			this.rotation - Math.PI / 2,
+			Car.ACCELERATION,
+			this.accelerationVector,
+		);
+		this.setAcceleration(
+			this.accelerationVector.x,
+			this.accelerationVector.y,
+		);
+	}
+
+	public turnLeft(): void {
+		this.setAngularVelocity(-Car.TURN_SPEED);
+	}
+
+	public turnRight(): void {
+		this.setAngularVelocity(Car.TURN_SPEED);
+	}
+
+	public isSensorActive(sensorNumber: number): boolean {
+		return this.sensorStatus[sensorNumber] || false;
 	}
 }
