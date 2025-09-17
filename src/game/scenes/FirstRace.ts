@@ -34,9 +34,9 @@ export default class FirstRace extends RaceTemplate {
 
 		this.car = new Car(this, 400, 500);
 
-		this.input.keyboard!.on('keydown-N', () => {
-			this.scene.start('Level2Scene');
-		});
+		//this.input.keyboard!.on('keydown-N', () => {
+			//this.scene.start('Level2Scene');
+		//});
 
         EventBus.emit('current-scene-ready', this);
 	}

@@ -14,6 +14,18 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 	private rays: any[];
 	private sensorStatus: { [key: number]: boolean } = {};
 
+	private movementQueue: {
+		action: string;
+		duration: number;
+		callback?: () => void;
+	}[] = [];
+	private currentMovement: {
+		action: string;
+		duration: number;
+		timer: number;
+		callback?: () => void;
+	} | null;
+
 	constructor(scene: Phaser.Scene, x: number, y: number) {
 		super(scene, x, y, 'car');
 
@@ -52,10 +64,44 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		}
 	}
 
-	public update(
-		delta: number,
-	): void {
+	public update(delta: number): void {
 		this.updateRays();
+		this.processMovementQueue(delta);
+	}
+
+	private processMovementQueue(delta: number): void {
+		if (this.currentMovement) {
+			this.currentMovement.timer -= delta;
+			if (this.currentMovement.timer <= 0) {
+				if (this.currentMovement.callback) {
+					this.currentMovement.callback();
+				}
+				this.currentMovement = null;
+				this.setAcceleration(0);
+				this.setAngularVelocity(0);
+			}
+		}
+
+		if (!this.currentMovement && this.movementQueue.length > 0) {
+			const nextMovement = this.movementQueue.shift();
+			if (nextMovement) {
+				this.currentMovement = {
+					...nextMovement,
+					timer: nextMovement.duration,
+				};
+				switch (this.currentMovement.action) {
+					case 'forward':
+						this.moveForward();
+						break;
+					case 'left':
+						this.turnLeft();
+						break;
+					case 'right':
+						this.turnRight();
+						break;
+				}
+			}
+		}
 	}
 
 	private handleInput(
@@ -126,7 +172,7 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		for (const key in this.sensorStatus) {
 			const ray = this.rays[i];
 			ray.setOrigin(this.x, this.y);
-			ray.setAngle(this.rotation + ray.angle);
+			ray.setAngle(this.rotation + Phaser.Math.DegToRad(ray.angleDeg));
 
 			const intersection = ray.cast();
 			this.sensorStatus[key] = !!intersection;
@@ -152,6 +198,18 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 
 	public turnRight(): void {
 		this.setAngularVelocity(Car.TURN_SPEED);
+	}
+
+	public queueMoveForward(duration: number, callback?: () => void): void {
+		this.movementQueue.push({ action: 'forward', duration, callback });
+	}
+
+	public queueTurnLeft(duration: number, callback?: () => void): void {
+		this.movementQueue.push({ action: 'left', duration, callback });
+	}
+
+	public queueTurnRight(duration: number, callback?: () => void): void {
+		this.movementQueue.push({ action: 'right', duration, callback });
 	}
 
 	public isSensorActive(sensorNumber: number): boolean {
