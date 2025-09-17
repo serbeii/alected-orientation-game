@@ -22,20 +22,49 @@ export default class FirstRace extends RaceTemplate {
 	}
 
 	preload() {
-		this.load.image('track2', 'assets/pist_1.png');
+		this.load.setPath('assets');
+		this.load.image('tiles', 'map_1.png');
+		this.load.tilemapTiledJSON('map1', 'map1.json');
 	}
 
 	override create() {
-		const stage = this.add.image(400, 400, 'track1');
-		stage.setScale(800/2048);
+		const map = this.make.tilemap({ key: 'map1' });
+		const tileset: Phaser.Tilemaps.Tileset | null = map.addTilesetImage(
+			'map_1',
+			'tiles',
+		);
 
-		this.car = new Car(this, 88, 620);
+		// Create the layers
+		if (!tileset) {
+			return;
+		}
+		const groundLayer = map.createLayer('track', tileset, 0, 0);
+		this.collisionLayer = map.createLayer('wall', tileset, 0, 0);
 
-		//this.input.keyboard!.on('keydown-N', () => {
-			//this.scene.start('Level2Scene');
-		//});
+		if (!this.collisionLayer) {
+			console.error(
+				'Collision layer "wall" not found. Check your Tiled file for a layer with this name.',
+			);
+			return;
+		}
 
-        EventBus.emit('current-scene-ready', this);
+		// Set up collisions
+		this.collisionLayer.setCollisionByProperty({ collides: true });
+
+
+		const scaleFactor = 800 / 2048; // canvas size / map size
+		this.cameras.main.setBounds(0, 0, 2048, 2048); // map bounds
+		this.cameras.main.setZoom(scaleFactor);
+
+		// Create the car
+		this.car = new Car(this, 225, 1560);
+		this.add.existing(this.car);
+		this.physics.add.existing(this.car);
+
+		// Add collision between the car and the collision layer
+		this.physics.add.collider(this.car, this.collisionLayer);
+
+		EventBus.emit('current-scene-ready', this);
 	}
 
 	override update(time: number, delta: number): void {

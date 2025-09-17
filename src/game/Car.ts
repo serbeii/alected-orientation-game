@@ -37,11 +37,14 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		this.setMaxVelocity(Car.MAX_VELOCITY);
 		this.setCollideWorldBounds(true);
 		this.setDepth(10);
-		this.scale = 48/512;
+		const carScale = 96 / 512;
+		this.setScale(carScale);
+		this.body?.setSize(this.displayWidth, this.displayHeight);
 		this.accelerationVector = new Phaser.Math.Vector2();
 
-		this.raycaster = (this.scene as RaceTemplate).raycasterPlugin.createRaycaster();
-		console.log(this.raycaster)
+		this.raycaster = (
+			this.scene as RaceTemplate
+		).raycasterPlugin.createRaycaster();
 
 		this.rays = [];
 		const rayLength = 60; // The detection distance
@@ -86,8 +89,7 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		for (const key in this.sensorStatus) {
 			const ray = this.rays[i];
 			ray.setOrigin(this.x, this.y);
-			const rayAngle =
-				this.rotation + Phaser.Math.DegToRad(ray.angleDeg);
+			const rayAngle = this.rotation + Phaser.Math.DegToRad(ray.angleDeg);
 
 			ray.setAngle(rayAngle);
 

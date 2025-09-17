@@ -25,7 +25,6 @@ export class Preloader extends Scene {
 		this.load.setPath('assets');
 
 		this.load.image('car', 'kirmizi.png');
-		this.load.image('track1', 'map_1.png');
 	}
 
 	create() {

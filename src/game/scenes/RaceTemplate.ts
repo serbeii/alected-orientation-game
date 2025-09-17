@@ -4,6 +4,7 @@ import { Car } from '../Car';
 export abstract class RaceTemplate extends Phaser.Scene {
 	public raycasterPlugin: PhaserRaycaster;
 	protected car!: Car;
+	protected collisionLayer: Phaser.Tilemaps.TilemapLayer | null;
 
 	abstract createObstacles(): Phaser.GameObjects.GameObject[];
 
@@ -15,7 +16,7 @@ export abstract class RaceTemplate extends Phaser.Scene {
 		(this as any).raycasterPlugin.mapGameObjects(obstacles, true);
 	}
 
-	update(time:number, delta: number) {
+	update(time: number, delta: number) {
 		if (this.car) {
 			this.car.update(delta);
 		}
