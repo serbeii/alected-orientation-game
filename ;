@@ -14,7 +14,7 @@ export default class FirstRace extends RaceTemplate {
 		this.load.tilemapTiledJSON('map1', 'map1.json');
 	}
 
-	create() {
+	override create() {
 		const map = this.make.tilemap({ key: 'map1' });
 		const tileset: Phaser.Tilemaps.Tileset | null = map.addTilesetImage(
 			'map_1',
@@ -39,25 +39,25 @@ export default class FirstRace extends RaceTemplate {
 		this.collisionLayer.setCollisionByExclusion([-1]);
 
 		const scaleFactor = 800 / 2048; // canvas size / map size
-		//this.cameras.main.setBounds(0, 0, 2048, 2048); // map bounds
-		//this.cameras.main.setZoom(scaleFactor);
-		groundLayer?.setScale(scaleFactor);
-		this.collisionLayer.setScale(scaleFactor);
+		this.cameras.main.setBounds(0, 0, 2048, 2048); // map bounds
+		this.cameras.main.setZoom(scaleFactor);
 
 		// Create the car
-		this.car = new Car(this, 88, 620, this.collisionLayer, this.debugMode);
+		this.car = new Car(this, 225, 1560, this.collisionLayer);
 
 		// Add collision between the car and the collision layer
 		this.physics.add.collider(this.car, this.collisionLayer);
 
-		if (this.debugMode) {
-			const debugGraphics = this.add.graphics().setAlpha(0.75);
-			this.collisionLayer.renderDebug(debugGraphics, {
-				tileColor: null,
-				collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
-				faceColor: new Phaser.Display.Color(40, 39, 37, 255),
-			});
-		}
+		const debugGraphics = this.add.graphics().setAlpha(0.75);
+		this.collisionLayer.renderDebug(debugGraphics, {
+			tileColor: null, // color of non-colliding tiles
+			collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+			faceColor: new Phaser.Display.Color(40, 39, 37, 255), // Color of colliding face edges
+		});
+		groundLayer?.renderDebug(debugGraphics, {
+			collidingTileColor: new Phaser.Display.Color(255,0,0,255),
+			faceColor: new Phaser.Display.Color(0,255,0,255)
+		})
 
 		EventBus.emit('current-scene-ready', this);
 	}

@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "map1.tmx",
     "expandedProjectPaths": [
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
@@ -13,6 +13,17 @@
         },
         "#map_1": {
             "scaleInDock": 1
+        },
+        "map1.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 1218,
+                "y": 1109
+            }
+        },
+        "map1.tmx#map_1": {
+            "scaleInDock": 0.25
         }
     },
     "last.exportedFilePath": "/sussydrive/Code/alected-orientation-game/public/assets",
@@ -22,9 +33,11 @@
     "map.lastUsedFormat": "tmx",
     "map.width": 64,
     "openFiles": [
+        "map1.tmx"
     ],
     "project": "untitled.tiled-project",
     "recentFiles": [
+        "map1.tmx"
     ],
     "tileset.embedInMap": true,
     "tileset.tileSize": {

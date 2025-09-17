@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+ <editorsettings>
+  <export target="map1.json" format="json"/>
+ </editorsettings>
  <tileset firstgid="1" name="map_1" tilewidth="32" tileheight="32" tilecount="4096" columns="64">
   <image source="map_1.png" width="2048" height="2048"/>
  </tileset>
- <layer id="1" name="track" width="64" height="64">
+ <layer id="1" name="track" width="64" height="64" visible="0">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -71,7 +74,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="2" name="wall" width="64" height="64">
+ <layer id="2" name="wall" width="64" height="64" visible="0">
   <properties>
    <property name="collides" type="bool" value="true"/>
   </properties>

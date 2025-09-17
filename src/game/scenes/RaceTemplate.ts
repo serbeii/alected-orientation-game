@@ -5,16 +5,7 @@ export abstract class RaceTemplate extends Phaser.Scene {
 	public raycasterPlugin: PhaserRaycaster;
 	protected car!: Car;
 	protected collisionLayer: Phaser.Tilemaps.TilemapLayer | null;
-
-	abstract createObstacles(): Phaser.GameObjects.GameObject[];
-
-	create() {
-		const obstacles = this.createObstacles();
-
-		this.car = new Car(this, 0, 0);
-
-		(this as any).raycasterPlugin.mapGameObjects(obstacles, true);
-	}
+	public debugMode: boolean = false;
 
 	update(time: number, delta: number) {
 		if (this.car) {

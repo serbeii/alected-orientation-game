@@ -12,7 +12,7 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 
 	private accelerationVector: Phaser.Math.Vector2;
 	private raycaster: Raycaster;
-	private rays: any[];
+	private rays: Map<number, any>;
 	private sensorStatus: { [key: number]: boolean } = {};
 
 	private initialX: number;
@@ -22,7 +22,17 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 	private speedMultiplier = 1.0;
 	private activeTimeout: number | undefined;
 
-	constructor(scene: RaceTemplate, x: number, y: number) {
+	private debugGraphics: Phaser.GameObjects.Graphics;
+
+	constructor(
+		scene: RaceTemplate,
+		x: number,
+		y: number,
+		collisionObjects:
+			| Phaser.GameObjects.GameObject[]
+			| Phaser.Tilemaps.TilemapLayer,
+		debugMode: boolean,
+	) {
 		super(scene, x, y, 'car');
 
 		scene.add.existing(this);
@@ -37,41 +47,74 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		this.setMaxVelocity(Car.MAX_VELOCITY);
 		this.setCollideWorldBounds(true);
 		this.setDepth(10);
-		const carScale = 96 / 512;
+		const carScale = 48 / 512;
 		this.setScale(carScale);
-		this.body?.setSize(512 * carScale, 512 * carScale);
+		this.body!.setSize(512 * carScale, 512 * carScale, true);
 		this.accelerationVector = new Phaser.Math.Vector2();
-		this.body?.setOffset(0,0)
+
+		this.debugGraphics = scene.add.graphics();
+		this.debugGraphics.setDepth(11);
+		this.debugGraphics.setVisible(debugMode);
 
 		this.raycaster = (
 			this.scene as RaceTemplate
 		).raycasterPlugin.createRaycaster();
 
-		this.rays = [];
-		const rayLength = 60; // The detection distance
-		const angles: { [key: number]: number } = {
-			7: -135,
-			8: -90,
-			9: -45, // Top-left, Top, Top-right
-			4: -180,
-			6: 0, // Left, Right
-			1: 135,
-			2: 90,
-			3: 45, // Bottom-left, Bottom, Bottom-right
-		};
-		for (const key in angles) {
-			const angleDeg = angles[key];
-			const ray = this.raycaster.createRay({
-				origin: { x: this.x, y: this.y },
-				angleDeg: angleDeg, // Use degrees for simplicity
-				range: rayLength,
+		if (collisionObjects instanceof Phaser.Tilemaps.TilemapLayer) {
+			// Collect all collidable tile indices
+			const collidableIndices: number[] = [];
+			collisionObjects.forEachTile((tile) => {
+				if (
+					tile &&
+					tile.collides &&
+					!collidableIndices.includes(tile.index)
+				) {
+					collidableIndices.push(tile.index);
+				}
 			});
-			this.rays.push(ray);
-			this.sensorStatus[key] = false; // Initialize sensor status
+
+			// Map the layer with only collidable tiles
+			this.raycaster.mapGameObjects(collisionObjects, false, {
+				collisionTiles: collidableIndices,
+			});
+		} else {
+			// Fallback: plain GameObjects (sprites, images, etc.)
+			this.raycaster.mapGameObjects(collisionObjects, false);
 		}
 
-console.log('Car body size:', this.body?.width, this.body?.height);
-console.log('Car display size:', this.displayWidth, this.displayHeight);
+		this.rays = new Map();
+
+		const rayLength = 150; // The detection distance
+		const rayConfig: { [key: number]: { angle: number; length?: number } } =
+			{
+				// Primary directions (8-way)
+				1: { angle: 135 }, // Bottom-left
+				2: { angle: 90 }, // Bottom
+				3: { angle: 45 }, // Bottom-right
+				4: { angle: 180 }, // Left
+				5: { angle: 0, length: rayLength * 1.5 }, // Forward (longer range)
+				6: { angle: 0 }, // Right
+				7: { angle: -135 }, // Top-left
+				8: { angle: -90 }, // Top
+				9: { angle: -45 }, // Top-right
+			};
+		for (const [key, config] of Object.entries(rayConfig)) {
+			const numKey = parseInt(key);
+			const ray = this.raycaster.createRay({
+				origin: { x: this.x, y: this.y },
+				angleDeg: 0, // Will be updated dynamically
+				autoSlice: true,
+				range: config.length || rayLength,
+			});
+
+			// Store both ray and its base angle
+			this.rays.set(numKey, {
+				ray: ray,
+				baseAngle: config.angle,
+			});
+			this.sensorStatus[numKey] = false;
+		}
+		this.debugShowBody = true;
 	}
 
 	public update(delta: number): void {
@@ -89,18 +132,67 @@ console.log('Car display size:', this.displayWidth, this.displayHeight);
 	}
 
 	private updateRays(): void {
-		let i = 0;
-		for (const key in this.sensorStatus) {
-			const ray = this.rays[i];
-			ray.setOrigin(this.x, this.y);
-			const rayAngle = this.rotation + Phaser.Math.DegToRad(ray.angleDeg);
+		this.debugGraphics.clear();
 
-			ray.setAngle(rayAngle);
+		const carCenterX = this.x;
+		const carCenterY = this.y;
+		for (const [key, rayData] of this.rays) {
+			const { ray, baseAngle } = rayData;
 
+			// Update ray origin to car's current position
+			ray.setOrigin(carCenterX, carCenterY);
+
+			const worldAngle =
+				this.rotation + Phaser.Math.DegToRad(baseAngle) - Math.PI / 2;
+			ray.setAngle(worldAngle);
+
+			// Cast the ray and check for intersections
 			const intersection = ray.cast();
 			this.sensorStatus[key] = !!intersection;
-			i++;
+
+			// Debug visualization
+			const rayEndX = intersection
+				? intersection.x
+				: carCenterX + Math.cos(worldAngle) * ray.rayRange;
+			const rayEndY = intersection
+				? intersection.y
+				: carCenterY + Math.sin(worldAngle) * ray.rayRange;
+
+			// Color based on collision detection
+			const color = intersection ? 0xff0000 : 0x00ff00; // Red if hit, green if clear
+			const alpha = intersection ? 1.0 : 0.3; // Full opacity if hit, semi-transparent if clear
+
+			this.debugGraphics.lineStyle(2, color, alpha);
+			this.debugGraphics.strokeLineShape(
+				new Phaser.Geom.Line(carCenterX, carCenterY, rayEndX, rayEndY),
+			);
+
+			if (intersection) {
+				this.debugGraphics.fillStyle(0xffff00, 1); // Yellow dot
+				this.debugGraphics.fillCircle(
+					intersection.x,
+					intersection.y,
+					3,
+				);
+				console.log(
+					`Ray ${key} HIT!`,
+					`Car Pos: (${Math.round(this.x)}, ${Math.round(this.y)})`,
+					`Intersection Pos: (${Math.round(intersection.x)}, ${Math.round(intersection.y)})`,
+				);
+
+				// Also draw a very obvious circle at the intersection point
+				this.debugGraphics.fillStyle(0x00ffff, 1); // Bright Cyan
+				this.debugGraphics.fillCircle(
+					intersection.x,
+					intersection.y,
+					15,
+				);
+			}
 		}
+
+		// Draw car center point for reference
+		this.debugGraphics.fillStyle(0x00ffff, 1); // Cyan
+		this.debugGraphics.fillCircle(carCenterX, carCenterY, 4);
 	}
 
 	private moveForward(): void {
