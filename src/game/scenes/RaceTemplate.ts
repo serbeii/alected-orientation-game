@@ -10,12 +10,12 @@ export abstract class RaceTemplate extends Phaser.Scene {
 	create() {
 		const obstacles = this.createObstacles();
 
-		this.car = new Car(this, 100, 100);
+		this.car = new Car(this, 0, 0);
 
 		(this as any).raycasterPlugin.mapGameObjects(obstacles, true);
 	}
 
-	update(delta: number) {
+	update(time:number, delta: number) {
 		if (this.car) {
 			this.car.update(delta);
 		}

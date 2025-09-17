@@ -37,6 +37,7 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		this.setMaxVelocity(Car.MAX_VELOCITY);
 		this.setCollideWorldBounds(true);
 		this.setDepth(10);
+		this.scale = 48/512;
 		this.accelerationVector = new Phaser.Math.Vector2();
 
 		this.raycaster = (this.scene as RaceTemplate).raycasterPlugin.createRaycaster();

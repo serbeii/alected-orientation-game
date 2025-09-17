@@ -26,13 +26,10 @@ export default class FirstRace extends RaceTemplate {
 	}
 
 	override create() {
-		this.add.image(400, 300, 'track1');
-		this.add.text(10, 10, 'Level 1 - Press "N" for next level', {
-			fontSize: '20px',
-			color: '#ffffff',
-		});
+		const stage = this.add.image(400, 400, 'track1');
+		stage.setScale(800/2048);
 
-		this.car = new Car(this, 400, 500);
+		this.car = new Car(this, 88, 620);
 
 		//this.input.keyboard!.on('keydown-N', () => {
 			//this.scene.start('Level2Scene');

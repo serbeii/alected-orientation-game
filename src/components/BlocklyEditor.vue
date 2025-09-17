@@ -4,7 +4,9 @@
 		<div class="controls">
 			<button @click="runCode" class="run-btn">▶ Run Code</button>
 			<button @click="stopCode" class="stop-btn">⏹ Stop</button>
-			<button @click="resetScene" class="reset-btn">🔄 Reset Scene</button>
+			<button @click="resetScene" class="reset-btn">
+				🔄 Reset Scene
+			</button>
 		</div>
 	</div>
 </template>
@@ -31,8 +33,8 @@ Blockly.defineBlocksWithJsonArray([
 				value: 1,
 				min: 0.1,
 				max: 10,
-				precision: 0.1
-			}
+				precision: 0.1,
+			},
 		],
 		previousStatement: null,
 		nextStatement: null,
@@ -50,8 +52,8 @@ Blockly.defineBlocksWithJsonArray([
 				value: 0.5,
 				min: 0.1,
 				max: 5,
-				precision: 0.1
-			}
+				precision: 0.1,
+			},
 		],
 		previousStatement: null,
 		nextStatement: null,
@@ -69,8 +71,8 @@ Blockly.defineBlocksWithJsonArray([
 				value: 0.5,
 				min: 0.1,
 				max: 5,
-				precision: 0.1
-			}
+				precision: 0.1,
+			},
 		],
 		previousStatement: null,
 		nextStatement: null,
@@ -88,8 +90,8 @@ Blockly.defineBlocksWithJsonArray([
 				value: 100,
 				min: 0,
 				max: 200,
-				precision: 10
-			}
+				precision: 10,
+			},
 		],
 		previousStatement: null,
 		nextStatement: null,
@@ -117,8 +119,8 @@ Blockly.defineBlocksWithJsonArray([
 				value: 1,
 				min: 0.1,
 				max: 10,
-				precision: 0.1
-			}
+				precision: 0.1,
+			},
 		],
 		previousStatement: null,
 		nextStatement: null,
@@ -135,20 +137,78 @@ Blockly.defineBlocksWithJsonArray([
 				name: 'TIMES',
 				value: 3,
 				min: 1,
-				max: 100
-			}
+				max: 100,
+			},
 		],
 		message1: 'do %1',
 		args1: [
 			{
 				type: 'input_statement',
-				name: 'DO'
-			}
+				name: 'DO',
+			},
 		],
 		previousStatement: null,
 		nextStatement: null,
 		colour: 120,
 		tooltip: 'Repeats the enclosed blocks a specified number of times.',
+		helpUrl: '',
+	},
+	{
+		type: 'while_true',
+		message0: 'repeat forever',
+		message1: 'do %1',
+		args1: [
+			{
+				type: 'input_statement',
+				name: 'DO',
+			},
+		],
+		previousStatement: null,
+		nextStatement: null,
+		colour: 120,
+		tooltip:
+			"Repeats the enclosed blocks forever (or until a 'break' block is used).",
+		helpUrl: '',
+	},
+	{
+		type: 'repeat_until_sensor_active',
+		message0: 'repeat until sensor %1 is active',
+		args0: [
+			{
+				type: 'field_dropdown',
+				name: 'SENSOR',
+				options: [
+					['top left (7)', '7'],
+					['top (8)', '8'],
+					['top right (9)', '9'],
+					['left (4)', '4'],
+					['right (6)', '6'],
+					['bottom left (1)', '1'],
+					['bottom (2)', '2'],
+					['bottom right (3)', '3'],
+				],
+			},
+		],
+		message1: 'do %1',
+		args1: [
+			{
+				type: 'input_statement',
+				name: 'DO',
+			},
+		],
+		previousStatement: null,
+		nextStatement: null,
+		colour: 120,
+		tooltip:
+			'Repeats the enclosed blocks until the specified sensor detects an obstacle.',
+		helpUrl: '',
+	},
+	{
+		type: 'break_loop',
+		message0: 'break out of loop',
+		previousStatement: null,
+		colour: 120,
+		tooltip: 'Exits the current loop.',
 		helpUrl: '',
 	},
 	{
@@ -230,15 +290,14 @@ Blockly.defineBlocksWithJsonArray([
 		args1: [
 			{
 				type: 'input_statement',
-				name: 'DO'
-			}
+				name: 'DO',
+			},
 		],
 		colour: 15,
 		tooltip: 'Entry point for the program.',
 		helpUrl: '',
-	}
+	},
 ]);
-
 
 // Define the code generation for the custom blocks
 javascriptGenerator.forBlock['move_forward'] = function (block) {
@@ -277,7 +336,28 @@ javascriptGenerator.forBlock['repeat_times'] = function (block, generator) {
 	return `for (let i = 0; i < ${times} && !car.shouldStop; i++) {\n${branch}}\n`;
 };
 
-javascriptGenerator.forBlock['while_sensor_active'] = function (block, generator) {
+javascriptGenerator.forBlock['while_true'] = function (block, generator) {
+	const branch = generator.statementToCode(block, 'DO');
+	return `while (true && !car.shouldStop) {\n${branch}await car.wait(50);\n}\n`;
+};
+
+javascriptGenerator.forBlock['repeat_until_sensor_active'] = function (
+	block,
+	generator,
+) {
+	const sensor = block.getFieldValue('SENSOR');
+	const branch = generator.statementToCode(block, 'DO');
+	return `do {\n${branch}await car.wait(50);\n} while (!car.isSensorActive(${sensor}) && !car.shouldStop);\n`;
+};
+
+javascriptGenerator.forBlock['break_loop'] = function (block) {
+	return 'break;\n';
+};
+
+javascriptGenerator.forBlock['while_sensor_active'] = function (
+	block,
+	generator,
+) {
 	const sensor = block.getFieldValue('SENSOR');
 	const branch = generator.statementToCode(block, 'DO');
 	return `while (car.isSensorActive(${sensor}) && !car.shouldStop) {\n${branch}await car.wait(50);\n}\n`;
@@ -294,7 +374,10 @@ javascriptGenerator.forBlock['if_sensor_active'] = function (block, generator) {
 	return code + '\n';
 };
 
-javascriptGenerator.forBlock['when_program_starts'] = function (block, generator) {
+javascriptGenerator.forBlock['when_program_starts'] = function (
+	block,
+	generator,
+) {
 	const branch = generator.statementToCode(block, 'DO');
 	return branch;
 };
@@ -314,7 +397,7 @@ onMounted(() => {
 						{ kind: 'block', type: 'turn_right' },
 						{ kind: 'block', type: 'set_speed' },
 						{ kind: 'block', type: 'stop' },
-					]
+					],
 				},
 				{
 					kind: 'category',
@@ -323,7 +406,7 @@ onMounted(() => {
 					contents: [
 						{ kind: 'block', type: 'if_sensor_active' },
 						{ kind: 'block', type: 'while_sensor_active' },
-					]
+					],
 				},
 				{
 					kind: 'category',
@@ -333,9 +416,13 @@ onMounted(() => {
 						{ kind: 'block', type: 'when_program_starts' },
 						{ kind: 'block', type: 'wait' },
 						{ kind: 'block', type: 'repeat_times' },
-					]
+						{ kind: 'block', type: 'while_sensor_active' },
+						{ kind: 'block', type: 'while_true' },
+						{ kind: 'block', type: 'repeat_until_sensor_active' },
+						{ kind: 'block', type: 'break_loop' },
+					],
 				},
-			]
+			],
 		};
 
 		workspace = Blockly.inject(blocklyDiv.value, {
@@ -348,7 +435,7 @@ onMounted(() => {
 				spacing: 20,
 				length: 3,
 				colour: '#ccc',
-				snap: true
+				snap: true,
 			},
 			zoom: {
 				controls: true,
@@ -356,8 +443,8 @@ onMounted(() => {
 				startScale: 1.0,
 				maxScale: 3,
 				minScale: 0.3,
-				scaleSpeed: 1.2
-			}
+				scaleSpeed: 1.2,
+			},
 		});
 
 		// Add a default start block
@@ -381,7 +468,6 @@ function stopCode() {
 function resetScene() {
 	emit('reset-scene');
 }
-
 </script>
 
 <style scoped>
@@ -401,7 +487,7 @@ button {
 }
 
 .run-btn {
-	background-color: #4CAF50;
+	background-color: #4caf50;
 	color: white;
 }
 
@@ -419,7 +505,7 @@ button {
 }
 
 .reset-btn {
-	background-color: #2196F3;
+	background-color: #2196f3;
 	color: white;
 }
 
