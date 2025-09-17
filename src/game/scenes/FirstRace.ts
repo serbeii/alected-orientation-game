@@ -42,15 +42,13 @@ export default class FirstRace extends RaceTemplate {
 		this.collisionLayer = map.createLayer('wall', tileset, 0, 0);
 
 		if (!this.collisionLayer) {
-			console.error(
-				'Collision layer "wall" not found. Check your Tiled file for a layer with this name.',
-			);
+			console.error('Collision layer "wall" not found.');
 			return;
 		}
 
 		// Set up collisions
-		this.collisionLayer.setCollisionByProperty({ collides: true });
-
+		//this.collisionLayer.setCollisionByProperty({ collides: true });
+		this.collisionLayer.setCollisionByExclusion([-1]);
 
 		const scaleFactor = 800 / 2048; // canvas size / map size
 		this.cameras.main.setBounds(0, 0, 2048, 2048); // map bounds
@@ -58,11 +56,17 @@ export default class FirstRace extends RaceTemplate {
 
 		// Create the car
 		this.car = new Car(this, 225, 1560);
-		this.add.existing(this.car);
-		this.physics.add.existing(this.car);
 
 		// Add collision between the car and the collision layer
 		this.physics.add.collider(this.car, this.collisionLayer);
+		/* DEBUG
+		const debugGraphics = this.add.graphics().setAlpha(0.5);
+		this.collisionLayer.renderDebug(debugGraphics, {
+			tileColor: null, // color of non-colliding tiles
+			collidingTileColor: new Phaser.Display.Color(255, 0, 0, 255), // color of colliding tiles
+			faceColor: new Phaser.Display.Color(0, 255, 0, 255),
+		});
+		*/
 
 		EventBus.emit('current-scene-ready', this);
 	}

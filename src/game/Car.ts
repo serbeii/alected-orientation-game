@@ -39,8 +39,9 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 		this.setDepth(10);
 		const carScale = 96 / 512;
 		this.setScale(carScale);
-		this.body?.setSize(this.displayWidth, this.displayHeight);
+		this.body?.setSize(512 * carScale, 512 * carScale);
 		this.accelerationVector = new Phaser.Math.Vector2();
+		this.body?.setOffset(0,0)
 
 		this.raycaster = (
 			this.scene as RaceTemplate
@@ -68,6 +69,9 @@ export class Car extends Phaser.Physics.Arcade.Sprite {
 			this.rays.push(ray);
 			this.sensorStatus[key] = false; // Initialize sensor status
 		}
+
+console.log('Car body size:', this.body?.width, this.body?.height);
+console.log('Car display size:', this.displayWidth, this.displayHeight);
 	}
 
 	public update(delta: number): void {
