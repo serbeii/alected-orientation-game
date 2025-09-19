@@ -25,4 +25,16 @@ export abstract class RaceTemplate extends Phaser.Scene {
 			console.error('Error executing Blockly code:', e);
 		}
 	}
+
+	public stopCarCode() {
+		if (this.car) {
+			this.car.stopMovement();
+		}
+	}
+
+	public resetScene() {
+		if (this.car) {
+			this.car.reset();
+		}
+	}
 }
